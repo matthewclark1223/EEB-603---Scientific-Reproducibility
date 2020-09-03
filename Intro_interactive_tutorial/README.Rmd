@@ -1,0 +1,81 @@
+---
+title: 'EEB 603 -- Interactive tutorials with learnr'
+date: "Fall 2020"
+author: "Sven Buerki"
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+  highlight: tango
+  pdf_document:
+    toc: yes
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+The objective of this class is to provide students with some tools and ideas to design their bioinformatic tutorials. In this tutorial, students will have an overview of the tools implemented in the R package [*learnr*](https://rstudio.github.io/learnr/index.html), which was developed to produce interactive tutorials with R. Although developed in R, the interactive tutorials are designed to be conducted in web browsers (but it could also be entirely done within RStudio).
+
+The interactive tutorial presented here is subdivided into 5 topics:
+
+1. **Introduction**: This part sets the scene and provides some background information on the tutorial.
+2. **Exercise**: The aim of the exercise is presented together with a pseudocode (with associated R functions) outlying steps to design and implement an R code to complete the exercise. Students are asked to develop their R codes and execute them in the code chunk. You can type your code directly in the window/console and execute it using the `R Code` button. The instructor has also provided the solution to the exercise, which could be accessed by pressing the `Solution` button available in the top banner of the code chunk window. 
+3. **Questions**: These questions are designed to test students on their code.
+4. **Solution**: A commented solution proposed by the instructor is available in a code chunk. Students can execute the code and inspect outputs produced to generate the final answer.
+5. **YouTube tutorial**: Here, a short YouTube video presents the procedure to launch a *learn* interactive tutorial and briefly presents the exercise. The main objective of this video is to show students that it is quite easy to integrate a video into their bioinformatic tutorials.
+
+Finally, the instructor wants to stress that students are not obliged to design their bioinformatic tutorials using *learnr*. You can also use the R Markdown language/syntax and output tutorials in HTML or PDF formats (more on this subject in Chapter 1).
+
+This document highlights steps to execute the interactive tutorial designed by the instructor.
+
+# Installation of required package
+
+Open RStudio and install the *learnr* package from CRAN by typing the following command in the console:
+
+```{r, eval=FALSE}
+install.packages("learnr")
+```
+
+# File(s) location & description
+
+Files associated to this tutorial are deposited on the [Google Drive](https://drive.google.com/drive/folders/1eZyjGQ478vaKiGD01hcryyNtdGp9t1J7?usp=sharing) under this path:
+`Reproducible_Science -> Bioinformatic_tutorials -> Intro_interactive_tutorial`
+
+There are two main files:
+
+- `README.html`: The documentation to install R package and run interactive tutorial.
+- `EEB603_Interactive_tutorial.Rmd`: The interactive tutorial written in R Markdown (but requiring functions from *learnr*).
+
+# YouTube video
+
+The instructor has made a video explaining the procedure to launch the interactive tutorial (based on option 1; see below) as well as some additional explanations related to the exercise. 
+
+- https://youtu.be/ALSpVwymZbM
+
+# Running tutorial
+
+1. Download the `Intro_interactive_tutorial` folder and save it on your local computer.
+2. Set working directory to location of `EEB603_Interactive_tutorial.Rmd`. 
+  - This can be done as follows in RStudio: `Session -> Set Working Directory -> Choose Directory...`. 
+  - You can also use the `setwd()` function to set your working directory (e.g. `setwd("~/Documents/Course_Reproducible_Science/Timetable/Intro_interactive_tutorial")`).
+3. Running tutorial. There are two options to run the integrative tutorial:
+  - **Option 1:** Open `EEB603_Interactive_tutorial.Rmd` in RStudio and press the `Run Document` button on the upper side bar to launch the tutorial. It will appear in the `Viewer` panel (on right bottom corner). You can open the interactive tutorial in your web browser by clicking on the third icon at the top of the viewer panel. This procedure is also explained in the [Youtube video](https://youtu.be/ALSpVwymZbM). 
+  - **Option 2:** Type the following command in the console. This will open a window in RStudio. You can also open the tutorial in your web browser by pressing the `Open in Browser` button.
+```{r, eval=FALSE}
+rmarkdown::run("EEB603_Interactive_tutorial.Rmd")
+```
+4. Enjoy going through the tutorial!
+
+# Learning syntax to develop interactive tutorials
+
+The procedure to develop interactive tutorials using *learnr* is presented [here](https://rstudio.github.io/learnr/index.html). To learn more about the syntax, the instructor encourages you to open `EEB603_Interactive_tutorial.Rmd` in RStudio and inspect the document. This will allow learning syntax and associated procedures to:
+
+- Design exercises (with embedded R code chunks and associated solutions).
+- Include multiple choices questions.
+- Embed a YouTube video.
