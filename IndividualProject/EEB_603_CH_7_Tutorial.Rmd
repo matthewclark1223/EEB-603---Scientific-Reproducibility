@@ -1,0 +1,858 @@
+---
+title: "Chapter 7 Tutorial: Tidying Your Data"
+author: Matt Clark & Jessica Bernardin
+date: October 20, 2020
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+
+library(learnr)
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(readr)
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## Before You Start
+
+Having tidy data is the foundation to doing good, reproducible science.  This tutorial will walk you through a few helpful and general skills to help you create and maintain tidy data.  That being said, the breadth of skills required to be a master of tidying data exceeds the time available for this tutorial.  For this reason, resources are provided at the end of each day to allow individual growth in this domain.  
+
+The Rules of Tidy Data (Wickham & Grolemund 2016):
+
+  1.  Each variable gets its own column
+  
+  2.  Each sample/observation gets its own row
+  
+  3.  Each cell only has one value
+
+
+### Objectives
+
+Learners use coding exercises to practice making messy data tidy.  We have based each exercise on some sample data that is very messy, you will write code to tidy this data.  Hints for code are available by pressing the hint button below each exercise.
+
+At the end of this tutorial, students will be able to:
+
+  * convert data between two formats, long and wide using the `spread` and `gather` functions.
+  * summarize, sort, and filter data using pipes `%>%`, `unite`, and `select` functions.
+  * display, replace, and exclude missing data using `replace`, `is.na`, and `omit.na` functions.
+  * merge data using `rbind` and `merge`.
+  * format times and dates in datasets using the `lubridate` package.
+
+
+### Timeline
+
+Day 1
+
+  * Introduction and Objectives
+  
+  * Pivoting Data
+  
+  * Summarizing Data
+  
+  * Missing Data
+  
+  * Summary, Resources, Quiz
+  
+Day 2
+
+  * Merging and Binding Data
+  
+  * Dates
+  
+  * Times
+  
+  * Summary, Resources, Quiz
+
+### Getting Set Up
+
+*All of the functions will be able to run in this tutorial without opening RStudio.  When you have finished the tutorial, you will want to try some of these techniques on your own data.  The functions we run for this tutorial are supported by the tidyr and dplyr packages.  Install and load these packages before tidying your own data.*
+
+
+## Day One: Pivoting Your Data
+Imagine your friend in a much cooler Biology department does some awesome research on cheetahs and what characteristics make them so super fast! They want to make you a co-author on this great cheetah paper if you can just make sense of the data. They send you the data and you decide to take a look.
+
+```{r Cheetah1, message=FALSE, warning=FALSE}
+CheetahLong<-read.csv(file = "Messy_CSVs/Cheetahs_long.csv")[,-1]
+```
+
+```{r Cheetah2, exercise=TRUE}
+#Examine the data
+dim(CheetahLong) #look at the dimensions
+CheetahLong[sample(1:400,10),] #look at 10 rows at random
+```
+
+We can see that the data is in long format, where there are different variables all mashed together in a `value` column and the identity of those variables is in the adjacent `measurement` column. This kind of data is really difficult to do statistics on or plot. 
+
+Let's check out the different measurements
+
+```{r Cheetah3, exercise=TRUE}
+unique(CheetahLong$Measurement)
+
+```
+
+We want to make the data into wide format where `NumberSpots`, `MaxSpeed`, `Birthday`, and `CelebratesBirthday` each get their own column.
+
+For this we can use the spread command, this is the complement to the gather command.  For this you identify the data, key (column with the variables), and the value (column with the value for each key).
+
+For example:  `spread (datatable, key, value)`.  Now you try to write the code to pivot this data from long to wide format with each variable in an independent column.
+
+```{r Cheetah4, exercise=TRUE}
+#Spread CheetahLong, the key is Measurement, and the value is Value.
+
+
+```
+:::{#Cheetah4-hint}
+**Hint:** 
+`CheetahWide <- spread(CheetahLong, Measurement, Value)`
+
+`CheetahWide`
+:::
+
+Great Job!  Now each variable is presented in an independent column.  You can reverse this using the gather command, try it below.
+
+
+```{r Cheetah5-setup}
+CheetahWide <- spread(CheetahLong, Measurement, Value)
+```
+
+```{r Cheetah5, exercise=TRUE}
+
+```
+:::{#Cheetah5-hint}
+**Hint:** 
+`gather(CheetahWide, Measurement, Value, 2:5)`
+:::
+
+## Day One: Summarizing Data
+
+This section will help you practice some of the basic commands to get summary information about your data.  You will also learn how to subset data in order to summary information on more manageable pieces of data.
+
+The following dataset shows some life history information on 330 zoo animals species found in North American zoos (Che-Castaldo et al. 2019).
+
+
+```{r zoo1, message=FALSE, warning=FALSE}
+
+zoo <- read.csv(file = "Messy_CSVs/zoo.csv")
+
+```
+
+First we want to get a handle on this data set.  There are a lot of functions that help us see the data: dim, head, tails, names, str, summary, just to list a few.
+
+```{r zoo2, exercise=TRUE}
+#Examine the data
+
+dim(zoo) #look at the dimensions
+
+#Shows the first 10 rows
+head(zoo)
+
+#shows the last 10 rows
+tail(zoo)
+
+```
+
+Sometimes it is helpful use the previous functions to put the dataset into context, especially if it is not one you created yourself.
+
+So now that you see the dimensions and a glimpse at the start and end of the data, lets use some others.  In this next set, you get to practice with the code!
+
+```{r zoo3, exercise=TRUE}
+#Look at the structure of the data (zoo).  
+
+
+#Run the chunk to see the output.
+
+
+```
+:::{#zoo3-hint}
+**Hint:** 
+`str(zoo)`
+:::
+
+```{r zoo4, exercise=TRUE}
+#Look at the summary of the data (zoo).  How is this different from the structure?
+
+```
+:::{#zoo4-hint}
+**Hint:** 
+`summary(zoo)`
+:::
+
+```{r zoo5, exercise=TRUE}
+#Look at the names of the data (zoo).  See any that could be combined?
+
+```
+
+:::{#zoo5-hint}
+**Hint:** 
+`names(zoo)`
+:::
+
+Notice that the ID column and Sample column have parts of one unique sample identifier.  Lets unite these two columns and give the column a new name "Sample ID".
+
+We can also pull just the mean life expectancy data out by excluding the columns we don't want to see.
+
+Filtering the data will allow you to combine columns and exclude columns, if you need to tidy your data to be more refined.  In this next section we will combine two columns using "unite" and we will exclude data using "-".
+
+We can do multiple operations on one object by using the pipe operator `%>%`.  This is a used from the tidyverse package and can help to structure your arguments.
+
+```{r zoo6, exercise=TRUE}
+#Filtering the data lets combine ID and Sample using the unite function.
+#We can also exclude columns so we can focus on MLE (mean life expectancy), we do this by using the - sign and indicating the column location.
+
+zoo2 <- zoo %>%
+  # new column name, ID and sample column being united, separating the values with an underscore
+  unite(Sample_ID, ID, Sample, sep="_") %>%
+  
+  # excluding columns 7 through 18 using the select function and the - sign
+  select(-7:-18)
+
+#We can use the names functions to see the new column names
+  names(zoo2)
+
+```
+
+Now we have a unique ID for each observation and we pulled out only the data we were interested in summarizing.  Now lets organize the data by `TaxonClass`.  This will put all our mammals, birds, and reptiles together so we can compare.
+
+```{r zoo7-setup}
+zoo2 <- zoo %>%
+  unite(Sample_ID, ID, Sample, sep="_") %>%
+  select(-7:-18)
+```
+
+```{r zoo7, exercise=TRUE}
+zoo2 %>% arrange(TaxonClass)
+
+#Output the summary of zoo to see how the data are arranged.
+```
+:::{#zoo7-hint}
+**Hint:** 
+`summary(zoo2)`
+:::
+
+Now that we have the taxon groups organized, lets arrange the maximum life expectancy within each taxon. `arrange(primary order, secondary order)`
+
+```{r zoo8-setup}
+zoo2 <- zoo %>%
+  unite(Sample_ID, ID, Sample, sep="_") %>%
+  select(-7:-18)
+```
+
+```{r zoo8, exercise=TRUE}
+# use the arrange function with TaxonClass and Overall.MLE
+
+# show the summary output for zoo2
+
+```
+
+:::{#zoo8-hint}
+**Hint:** 
+`zoo2 %>% arrange(TaxonClass, Overall.MLE)`
+
+`summary(zoo2)`
+:::
+
+Do you notice how the data is arranged now, ascending or descending? 
+
+Let's change the order from ascending MLE to descending using the `-` sign in front of `Overall.MLE`.
+
+```{r zoo9-setup}
+zoo2 <- zoo %>%
+  unite(Sample_ID, ID, Sample, sep="_") %>%
+  select(-7:-18)
+```
+
+```{r zoo9, exercise=TRUE}
+
+
+```
+:::{#zoo9-hint}
+**Hint:** 
+`zoo2 %>% arrange(TaxonClass, -Overall.MLE)`
+
+`summary(zoo2)`
+:::
+
+Now our data is looking good!  
+
+There is one more tool we can use to practice summarizing our data.  We can analyze a subset of data.  We will name a variable `zoomeanMLE` and we will organize the data by taxon class and find the mean life expectancy for each group of animals.  
+
+Now there is a few pieces of missing data, we will remove these is `na.rm=TRUE`.  We will use this more in the next section but it will remove NA's and allow us to calculate the mean for each group.
+
+First set your variable and the dataset.
+
+Then use a pipe, under which you will group the data by `TaxonClass` using `group_by(columnname)`.
+
+Lastly, you can summarize the data using `summarize(newcolumnname = function(values, na.rm = TRUE))`
+
+```{r zoo10-setup}
+zoo2 <- zoo %>%
+  unite(Sample_ID, ID, Sample, sep="_") %>%
+  select(-7:-18)
+```
+
+```{r zoo10, exercise=TRUE}
+
+
+```
+:::{#zoo10-hint}
+**Hint:** 
+`zoomeanMLE <- zoo2 %>%`
+    `group_by(TaxonClass) %>%`
+    `summarize(mean_MLE = mean(Overall.MLE, na.rm = TRUE))`
+
+`zoomeanMLE`
+:::
+
+You might notice there is a `NaN` for Arachnida, this is because there is only one observation for this class and there is no MLE data for it.  Now we can see that those Chondrichthyes have the longest lifespan in captivity, GO SHARKS!!
+
+Also, note that the `group_by()` function will override previous groupings and might show a friendly warning message.
+
+Great Job!  Now you can summarize, sort, and filter your data, these are great skills for tidying your data!
+
+
+## Day One: Dealing with NA's
+
+Let's imagine that you're helping the health center out with some COVID-19 data analysis. They send you the data and you check it out.
+
+```{r Covid1, message=FALSE, warning=FALSE}
+CovDat<-read.csv("./Messy_CSVs/COVID_NAs.csv")[,-1]
+```
+
+```{r Covid2, exercise=TRUE}
+#Examine the data set
+dim(CovDat) #look at the dimensions
+CovDat #scroll through
+```
+
+What do you notice by looking through the data?
+
+We can see a variety of different ways they have stored NAs!
+
+It look like there's: NA, nan and -999
+
+Another way to identify missing data is using `is.na(data)`.  Try this out with our `CovDat` below.
+
+```{r covid3, exercise=TRUE}
+
+```
+:::{#covid3-hint}
+**Hint:** 
+`is.na(CovDat)`
+:::
+
+Missing data can be represented by:
+
+  * NA = not available (labeled as missing data)
+  * nan = not a number (impossible value)
+  * -999 = missing data (impossible value)
+ 
+Sometimes the missing data isn't labeled as missing `NA`, it might just be absent.  This is called implicitly missing.
+  
+```{r covid4, exercise=TRUE}
+#Let's replace the -999 with NA in our data set, type in the code below and see how it works.
+
+#CovDat[CovDat==-999] <- NA
+
+
+#CovDat
+
+
+```
+:::{#covid4-hint}
+**Hint:** 
+`CovDat[CovDat==-999] <- NA`
+
+`CovDat`
+:::
+
+Another way to replace missing or unwanted values is using `replace()` 
+
+For example if df was our data frame and we wanted to replace all the words that said missing with NA.
+
+`df <- replace(df, df == "missing", NA)`
+
+Using our CovDat data, replace the characters NaN and values -999 with NA.
+
+```{r covid-5, exercise=TRUE}
+
+```
+:::{#covid5-hint}
+**Hint:** 
+`CovDat <- replace(CovDat, CovDat == -999, NA)`
+
+`CovDat <- replace(CovDat, CovDat ==  "NaN", NA)`
+
+`CovDat`
+:::
+
+Sometimes missing data can throw a wrench in our analysis.  Use the space below to calculate the mean temperature from the CovDat (leaving NA in).
+
+```{r covid6-setup}
+CovDat[CovDat==-999] <- NA
+```
+
+```{r covid6, exercise=TRUE}
+# mean(data$column)
+
+
+```
+:::{#covid6-hint}
+**Hint:** 
+`mean(CovDat$Temp)`
+:::
+
+What happened?  Let's try again taking care of those missing values.
+
+```{r covid7-setup}
+CovDat[CovDat==-999] <- NA
+```
+
+```{r covid7, exercise=TRUE}
+# add  , na.rm=TRUE to the argument.
+
+
+```
+:::{#covid7-hint}
+**Hint:** 
+`mean(CovDat$Temp, na.rm=TRUE)`
+:::
+
+If you want to return a list of rows that have complete data you can use the `complete.cases()` function.  Using ! will return the observations with missing data.
+
+```{r covid8-setup}
+CovDat[CovDat==-999] <- NA
+```
+
+```{r covid8, exercise=TRUE}
+# CovDat[!complete.cases(CovDat),]
+
+#Take some time to type in the code above to see what the output is.
+
+
+```
+:::{#covid8-hint}
+**Hint:** 
+`CovDat[!complete.cases(CovDat),]`
+
+`CovDat`
+:::
+
+We can create an object with no missing data using `na.omit()`.  Try this function in the space below.
+
+```{r covid9-setup}
+CovDat[CovDat==-999] <- NA
+```
+
+```{r covid9, exercise=TRUE}
+
+
+
+```
+:::{#covid9-hint}
+**Hint:** 
+`CovDatComplete <- na.omit(CovDat)`
+
+`CovDatComplete`
+:::
+
+Remember:  Sometimes pivoting data from long to wide format will reveal implicitly missing data.
+
+## Day One: Summary and Quiz
+
+### Resources
+
+[Tidyverse Style Guide: PIPES](https://style.tidyverse.org/pipes.html)
+
+[Tidy Data Practice](https://garrettgman.github.io/tidying/)
+
+[Data Wrangling Cheat Sheet](https://rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf)
+
+### Follow-up Videos
+
+![](https://www.youtube.com/watch?v=jOd65mR1zfw)
+
+![](https://www.youtube.com/watch?v=1ELALQlO-yM)
+
+### Quiz
+
+*This quiz is not for a grade, but a helpful guide to what you know and things you might brush up on.*
+
+
+```{r quiz}
+quiz(
+  question("Which format is your data in when the columns are variables and the rows are observations?",
+    answer("short"),
+    answer("wide"),
+    answer("long", correct = TRUE),
+    answer("tall")
+  ),
+  question("Which function helps to convert data from wide to long format  by when the user identifies a key and value?",
+    answer("gather", correct = TRUE),
+    answer("spread"),
+    answer("transpose"),
+    answer("reshape")
+  ),
+   question("Which command gives the basic descriptive stats and types for all the variables in a dataframe?",
+    answer("summary", correct = TRUE),
+    answer("summarize"),
+    answer("stats"),
+    answer("grid")
+  ),
+   question("Which command would denote including data that is not missing?",
+    answer("!is.na", correct = TRUE),
+    answer("!"),
+    answer("is.na"),
+    answer("na", correct = TRUE)
+  ),
+   question("Which of the R packages listed below are used to help tidy data?",
+    answer("tidyr", correct = TRUE),
+    answer("learnr"),
+    answer("ggplot2"),
+    answer("tidyverse", correct = TRUE)
+  )
+  
+)
+```
+
+## Day Two: Merging Data
+
+Imagine you are the regional manager of Winco in Idaho. One thing you might want to do is combine the data from Boise and Idaho Falls. Let's start with data on how many customers visited each location, on each day in 2020. 
+
+### Examine each dataset
+Start by looking at the Boise location and examine the dimensions. The dataset name is `Winco1`
+
+```{r Win1, message=FALSE, warning=FALSE}
+Winco1<-read.csv("./Messy_CSVs/MergeData/WincoMerge1.csv")[,-1]
+```
+
+
+```{r win1L, exercise=TRUE}
+#Examine the Boise data set
+ #look at the dimensions
+ #look at the first 6 rows
+```
+:::{#win1L-hint}
+**Hint:** 
+`dim(Winco1)` look at the dimensions
+
+`head(Winco1)` look at the first 6 rows
+:::
+
+
+Then look at the Idaho Falls location and examine the dimensions of that dataset too. The name of this dataset is `Winco2`
+
+```{r Win2, message=FALSE, warning=FALSE}
+Winco2<-read.csv("./Messy_CSVs/MergeData/WincoMerge2.csv")[,-1]
+```
+
+```{r Win2L, exercise=TRUE}
+#Examine the Idaho Falls data set
+ #look at the dimensions
+ #look at the first 6 rows
+```
+:::{#Win2L-hint}
+**Hint:** 
+`dim(Winco2)` look at the dimensions
+
+`head(Winco2)` look at the first 6 rows
+:::
+
+
+### Merge with `rbind`
+We can see that these two datasets have the same number of columns and the same column names. This is the most simple way to merge data.
+
+We can stack these two datasets on top of each other using the `rbind` command.
+```{r rbindreal, message=FALSE, warning=FALSE}
+allWinDat<- rbind(Winco1,Winco2)
+```
+
+```{r WinComb1, exercise=TRUE}
+ #use rbind
+
+ #look at the dimensions
+
+
+# look at first three rows
+ #look at last three rows
+```
+:::{#WinComb1-hint}
+**Hint:** 
+`allWinDat<- rbind(Winco1,Winco2)` use rbind
+
+`dim(allWinDat)` look at the dimensions
+
+`head(allWinDat,n=3)` look at first three rows
+
+`tail(allWinDat,n=3)` look at last three rows
+:::
+
+
+### Merge with `merge`
+
+Now imagine that we get another dataset which contains the financial data for each location on each day. Let's first look at it. The name of this dataset is `Winco3`.
+
+```{r Win3, message=FALSE, warning=FALSE}
+Winco3<-read.csv("./Messy_CSVs/MergeData/WincoMerge3.csv")[,-1]
+```
+
+```{r win3L, exercise=TRUE}
+#Examine the Boise data set
+ #look at the dimensions
+ #look at the first 6 rows
+```
+:::{#win3L-hint}
+**Hint:** 
+`dim(Winco3)` look at the dimensions
+
+`head(Winco3)` look at the first 6 rows
+:::
+
+Notice that this data has the same dates and locations as the dataset we just created using `rbind`. We will want to merge the data we just created with this new dataset and make sure that the rows are all in the right place. We can do that with the `merge` command.
+
+```{r winMerge, exercise=TRUE}
+ #merge using merge() command
+
+ #check out the dimensions
+ #first 10 rows
+```
+
+:::{#winMerge-hint}
+**Hint:** 
+`WincoFull<-merge(allWinDat,Winco3, by=c("Date","Location"))` merge using merge() command
+
+`dim(WincoFull)` check out the dimensions
+
+`head(WincoFull,n=10)` first 10 rows
+:::
+
+Awesome! We got our datasets all merged!
+
+## Day Two: Dates
+As graduate students, we all know that Boise State does not provide us with dental coverage. Being the quantitative, calculated genius you are, you decide to start tracking when and for how long you brush your teeth. You plan to use this to find the optimum brush time and never get a cavity again!
+
+The only downside is that you made this dataset before you learned about recording tidy data. Let's check it out.
+
+```{r brush1, message=FALSE, warning=FALSE}
+Brush<-read_csv("./Messy_CSVs/ToothBrushingData_Dates_Times.csv")[,-1]
+```
+
+
+```{r brush2, exercise=TRUE}
+Brush
+```
+
+### Dates with `lubridate`
+
+The `lubridate` package in R has a **ton** of useful functions for dealing with dates and times. The ones we will use here are the various `dmy`, `mdy`, `ydm`, etc... functions.
+
+These functions take vectors of dates that are organized in an order that corresponds to the function letter order:
+
+* d = day
+* m = month
+* y = year
+
+Here's an example
+```{r brush3, exercise=TRUE}
+x<-"10-31-2020" #lets add a date with month-day-year order
+lubridate::mdy(x)
+```
+Now let's try it with our ugly date vector.
+
+```{r brush4, exercise=TRUE}
+ #use dmy on our date vector
+```
+:::{#brush4-hint}
+**Hint:** 
+`lubridate::dmy(Brush$Date)` use dmy on our date vector
+:::
+
+Awesome! That was easy!
+
+### The Ugliest Dates of Them All
+
+The most difficult date data to deal with is heterogeneous date data.
+
+Take the following date vector
+
+```{r brush5, exercise=TRUE}
+x <- c("4th of July 1999", "1999/4/7", "4-1999-7")
+x
+```
+
+That's pretty bad. But, we can deal with it easily with `lubridate`.
+We will use the `parse_date_time` function. This function allows us to input the various date formats as a vector. Let's try it out.
+
+```{r brush6, exercise=TRUE}
+x <- c("4th of July 1999", "1999/4/7", "4-1999-7") #make an ugly date vector
+ #now change all the formats using the parse_date_time command
+```
+
+:::{#brush6-hint}
+**Hint:** 
+`x <- c("4th of July 1999", "1999/4/7", "4-1999-7")` make an ugly date vector
+
+`parse_date_time(x, c("dmy","ydm","dym"))` now change all the formats using the parse_date_time command
+:::
+
+
+### How R thinks about dates
+Days in R are stored as the number of days since 1970-01-01
+
+We can explore this with the `as_date` function
+```{r brush7, exercise=TRUE}
+as_date(1)
+```
+
+```{r brush8, exercise=TRUE}
+as_date(47894)
+```
+
+**Important** Excel and Google Sheets actually do the same thing, but they start at 1900-01-01. For this reason, you need to be VERY careful when converting dates from R to Excel/Google Sheets and vise versa. 
+
+## Day Two: Times
+To get to the bottom of our tooth brushing problem, we're going to have to do some math with the times. Let's look at the data again.
+
+```{r brush9, exercise = TRUE}
+Brush
+```
+
+Times are stored in R as the number of seconds since 00:00:00
+
+Let's explore that with the `hms` function in `lubridate`
+
+* h = hours
+* m = mins
+* s = seconds
+
+```{r brush10, exercise=TRUE}
+t <- hms::as_hms(85) 
+t
+```
+
+We can do the same thing with our Brush data. Let's see if it can check how long each observation is from 00:00:00 using the `hms` command
+
+```{r brush11, exercise = TRUE}
+ #use hms on out StartBrush vector
+
+```
+:::{#brush11-hint}
+**Hint:** 
+`hms(Brush$StartBrush)` use hms on out StartBrush vector
+:::
+
+Now imagine that we made a mistake and these times were all recored in PM. We can convert these with the `parse_date_time` function again. We will use a different syntax this time though.
+
+Here, we'll tell lubridate how we are storing our time data as follows:
+
+* %I: Hours as decimal number (01–12 or 1–12).
+* %M: Minute as decimal number (00–59 or 0–59).
+* %S: Second as decimal number (00–61 or 0–61).
+* %P: AM/PM indicator in the locale. 
+
+```{r brush12, exercise = TRUE}
+ #we need to add PM onto our times using paste()
+  #now we can read them as pm times using parse_time()
+
+```
+:::{#brush12-hint}
+**Hint:** 
+`t<-paste(Brush$StartBrush, "PM")` we need to add PM onto our times
+`parse_time(t, '%I:%M:%S %p')`  now we can read them as pm times
+:::
+
+
+Lastly, let's add on the total time that we brushed our teach in each observation. We can do this in seconds only or in hms format.
+
+First let's do it in seconds 
+
+```{r brush13, exercise = TRUE, warning=FALSE, message=FALSE}
+
+```
+:::{#brush13-hint}
+**Hint:** 
+`Brush$totalTime1<-Brush$EndBrush-Brush$StartBrush`
+
+`Brush`
+:::
+Now try in hms format
+```{r brush14, exercise = TRUE, warning=FALSE, message=FALSE}
+
+```
+
+:::{#brush14-hint}
+**Hint:** 
+`Brush$totalTime2<-hms(Brush$EndBrush)-hms(Brush$StartBrush)`
+
+`Brush`
+:::
+## Day Two: Summary and Quiz
+
+### Resources
+
+[Data Carpentry Tutorials](https://datacarpentry.org/lessons/#ecology-workshop)
+
+[Lubridate Cheat Sheet](https://lubridate.tidyverse.org/)
+
+### Follow-up Videos
+
+![](https://www.youtube.com/watch?v=Zc_ufg4uW4U)
+
+### Quiz
+*This quiz is not for a grade, but a helpful guide to what you know and things you might brush up on.*
+
+
+```{r quiz2}
+quiz(
+  question("Which syntax is correct for merging two dataframes by multiple variables?",
+    answer("merge(data1, data2, by=var1,var2)"),
+    answer("merge(c(data1, data2), (by=var1,var2))"),
+    answer("merge(c(data1, data2), by=var1,var2)" ),
+    answer("merge(data1, data2, by=c(var1,var2))",correct = TRUE)
+  ),
+  question("rbind only works to merge two dataframes if they have the same",
+    answer("number of rows"),
+   answer("number of rows AND row names"),
+    answer("number of columns"),
+    answer("number of columns AND column names", correct = TRUE)
+  ),
+   question("What is the standard way to record dates in R?",
+    answer("1993-12-23", correct = TRUE),
+    answer("12-23-1993"),
+    answer("23-12-1993"),
+    answer("12/23/1993")
+  ),
+   question("Using the `lubridate` package, which function would you use to convert this date to the propper format: 4th of July '99?",
+    answer("ymd()"),
+    answer("dmy()", correct = TRUE),
+    answer("mdy()")
+    
+  ),
+   question("R stores time as a numerical count of?",
+    answer("seconds", correct = TRUE),
+    answer("minutes"),
+    answer("hours"),
+    answer("days")
+  )
+  
+)
+```
+
+## References
+
+Che-Castaldo JP, Byrne A, Perišin K, Faust LJ. 2019. Sex-specific median life expectancies from ex situ populations for 330 animal species. Scientific Data. 6(1):190019. 
+
+Wickham H, Grolemund G. 2017. R for Data Science: Import, Tidy, Transform, Visualize, and Model Data. 1st ed. O’Reilly Media, Inc. http://r4ds.had.co.nz.
+
+
+## Session Information
+```{r sessioninfo, echo=FALSE}
+
+sessionInfo()
+
+```
+
